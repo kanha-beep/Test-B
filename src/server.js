@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+
+dotenv.config();
 import cors from "cors";
 import express from "express";
 import { connectDb } from "./config/db.js";
@@ -5,11 +8,11 @@ import { env } from "./config/env.js";
 import testRoutes from "./routes/testRoutes.js";
 
 const app = express();
-const allowedOrigin = process.env.FRONT_END_URI.split(",")
-console.log("Allowed origins:", allowedOrigin);
+// const allowedOrigin = process.env.FRONT_END_URI.split(",")
+console.log("Allowed origins:", env.allowedOrigin);
 app.use(
   cors({
-    origin: allowedOrigin
+    origin: env.allowedOrigin
   })
 );
 app.use(express.json());
