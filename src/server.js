@@ -6,6 +6,8 @@ import express from "express";
 import { connectDb } from "./config/db.js";
 import { env } from "./config/env.js";
 import testRoutes from "./routes/testRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import draftRoutes from "./routes/draftRoutes.js";
 
 const app = express();
 // const allowedOrigin = process.env.FRONT_END_URI.split(",")
@@ -15,12 +17,14 @@ app.use(
     origin: env.allowedOrigin
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
 
 app.get("/api/health", (_request, response) => {
   response.json({ ok: true });
 });
 
+app.use("/api/auth", authRoutes);
+app.use("/api/drafts", draftRoutes);
 app.use("/api/tests", testRoutes);
 
 app.use((error, _request, response, _next) => {

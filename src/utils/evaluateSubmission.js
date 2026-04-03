@@ -1,3 +1,15 @@
+function normalizeOption(option) {
+  if (!option) {
+    return { key: "", text: "", explanation: "" };
+  }
+  const plain = typeof option.toObject === "function" ? option.toObject() : option;
+  return {
+    key: plain.key,
+    text: plain.text ?? "",
+    explanation: String(plain.explanation ?? "").trim()
+  };
+}
+
 function deriveStatus(answer, question) {
   const isReview = answer.status === "review" || answer.status === "review_answered";
   const hasAnswer = Boolean(answer.selectedOption);
@@ -38,14 +50,16 @@ export function evaluateSubmission(test, answers) {
           ? negativeMarks
           : 0;
 
+    const optionsNormalized = (question.options || []).map((option) => normalizeOption(option));
+
     return {
       questionId: question._id,
       questionNumber: question.number,
       prompt: question.prompt,
-      options: question.options,
+      options: optionsNormalized,
       selectedOption: rawAnswer.selectedOption || null,
       correctOption: question.correctOption,
-      explanation: question.explanation,
+      explanation: String(question.explanation ?? "").trim(),
       status,
       marksAwarded
     };

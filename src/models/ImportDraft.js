@@ -1,0 +1,17 @@
+import mongoose from "mongoose";
+
+const importDraftSchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true },
+    title: { type: String, default: "" },
+    description: { type: String, default: "" },
+    sourceFileName: { type: String, default: "" },
+    durationMinutes: { type: Number, default: 30 },
+    questions: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    confirmedIds: { type: [String], default: [] },
+    warnings: { type: [String], default: [] }
+  },
+  { timestamps: true }
+);
+
+export const ImportDraft = mongoose.model("ImportDraft", importDraftSchema);

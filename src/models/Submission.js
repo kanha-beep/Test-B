@@ -21,7 +21,8 @@ const evaluatedAnswerSchema = new mongoose.Schema(
     options: [
       {
         key: String,
-        text: String
+        text: String,
+        explanation: { type: String, default: "" }
       }
     ],
     selectedOption: { type: String, default: null },
@@ -40,6 +41,7 @@ const evaluatedAnswerSchema = new mongoose.Schema(
 const submissionSchema = new mongoose.Schema(
   {
     testId: { type: mongoose.Schema.Types.ObjectId, ref: "Test", required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     candidateName: { type: String, required: true },
     answers: { type: [answerSchema], default: [] },
     score: { type: Number, required: true },
@@ -48,6 +50,10 @@ const submissionSchema = new mongoose.Schema(
       incorrect: { type: Number, default: 0 },
       skipped: { type: Number, default: 0 },
       review: { type: Number, default: 0 }
+    },
+    rankingSnapshot: {
+      rank: { type: Number, default: null },
+      totalParticipants: { type: Number, default: 0 }
     },
     evaluatedAnswers: { type: [evaluatedAnswerSchema], default: [] }
   },
