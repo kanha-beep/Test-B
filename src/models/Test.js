@@ -1,3 +1,5 @@
+// Define the test model schema stored in MongoDB.
+
 import mongoose from "mongoose";
 
 const optionSchema = new mongoose.Schema(
@@ -43,4 +45,4 @@ const testSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Test = mongoose.model("Test", testSchema);
+export const Test = mongoose.model("Test", testSchema);

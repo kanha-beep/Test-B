@@ -1,3 +1,5 @@
+// Register test-related API endpoints for list, create, import, rankings, and submission flows.
+
 import { Router } from "express";
 import {
   createGeneratedTest,
@@ -30,4 +32,4 @@ router.get("/:id", getTestById);
 router.post("/:id/submissions", optionalAuth, submitTest);
 router.delete("/:id", requireAuth, requireAdmin, deleteTest);
 
-export default router;
+export default router;

@@ -1,3 +1,6 @@
+// Score a submission against the saved test and build the evaluation summary.
+
+// Handle the normalizeOption logic for this module.
 function normalizeOption(option) {
   if (!option) {
     return { key: "", text: "", explanation: "" };
@@ -10,6 +13,7 @@ function normalizeOption(option) {
   };
 }
 
+// Handle the deriveStatus logic for this module.
 function deriveStatus(answer, question) {
   const isReview = answer.status === "review" || answer.status === "review_answered";
   const hasAnswer = Boolean(answer.selectedOption);
@@ -30,6 +34,7 @@ function deriveStatus(answer, question) {
   return isCorrect ? "correct" : "incorrect";
 }
 
+// Compare submitted answers against the test and build the final score summary.
 export function evaluateSubmission(test, answers) {
   const answerMap = new Map(answers.map((answer) => [String(answer.questionId), answer]));
   const positiveMarks = Number(test.positiveMarks ?? 2);

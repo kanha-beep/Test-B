@@ -1,3 +1,5 @@
+// Support server-side PDF parsing and normalization for imported test papers.
+
 import { readFile } from "fs/promises";
 import { createRequire } from "module";
 
@@ -11,14 +13,17 @@ const OPTION_START = /^\s*[\(\[]?\s*([A-Da-d])\s*[\)\].:\-]\s+(.+)$/;
 const INLINE_ANSWER = /(?:ans(?:wer)?|correct(?:\s*option)?|solution)\s*[:\-]?\s*\(?\s*([A-Da-d])\s*\)?/i;
 const ANSWER_SECTION_TITLE = /(answer\s*key|correct\s*answers?|solutions?)/i;
 
+// Handle the normalizeWhitespace logic for this module.
 function normalizeWhitespace(v) {
   return v.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
 }
 
+// Handle the normalizeLines logic for this module.
 function normalizeLines(text) {
   return text.split(/\r?\n/).map(normalizeWhitespace).filter(Boolean);
 }
 
+// Handle the detectColumnSplit logic for this module.
 function detectColumnSplit(items) {
   const xs = items.map((i) => Number(i.transform?.[4] || 0));
   if (!xs.length) return null;
@@ -27,6 +32,7 @@ function detectColumnSplit(items) {
   return mid;
 }
 
+// Handle the buildColumnText logic for this module.
 function buildColumnText(items, minX, maxX) {
   const rows = new Map();
   items.forEach((item) => {
@@ -44,6 +50,7 @@ function buildColumnText(items, minX, maxX) {
     .join("\n");
 }
 
+// Handle the buildPageText logic for this module.
 function buildPageText(items) {
   const valid = items.filter((i) => i.str && String(i.str).trim());
   const split = detectColumnSplit(valid);
@@ -65,6 +72,7 @@ function buildPageText(items) {
   return buildColumnText(valid, Math.min(...allXs), split) + "\n" + buildColumnText(valid, split, Math.max(...allXs) + 1);
 }
 
+// Handle the parseAnswerKey logic for this module.
 function parseAnswerKey(lines) {
   const map = new Map();
   let inSection = false;
@@ -78,6 +86,7 @@ function parseAnswerKey(lines) {
   return map;
 }
 
+// Handle the splitInlineOptions logic for this module.
 function splitInlineOptions(line) {
   const matches = [...line.matchAll(/(^|\s)\(?\s*([A-Da-d])\s*\)?\s*[)\].:\-]?\s+(?=\S)/g)];
   if (matches.length < 2) return null;
@@ -90,6 +99,7 @@ function splitInlineOptions(line) {
     .filter(Boolean);
 }
 
+// Handle the parseQuestionBlocks logic for this module.
 function parseQuestionBlocks(lines) {
   const starts = [];
   lines.forEach((line, i) => { if (QUESTION_START.test(line)) starts.push(i); });
@@ -106,12 +116,14 @@ function parseQuestionBlocks(lines) {
   return filtered;
 }
 
+// Handle the finalizeOption logic for this module.
 function finalizeOption(buf, options) {
   if (!buf) return;
   const text = normalizeWhitespace(buf.text.join(" "));
   if (text) options.push({ key: buf.key, text });
 }
 
+// Handle the parseQuestionBlock logic for this module.
 function parseQuestionBlock(block, answerKey) {
   const m = block[0].match(QUESTION_START);
   if (!m) return null;
@@ -167,6 +179,7 @@ function parseQuestionBlock(block, answerKey) {
   };
 }
 
+// Handle the parsePdfFile logic for this module.
 export async function parsePdfFile(filePath) {
   console.log("1. pdf starts parsing for file: ", filePath);
   const data = new Uint8Array(await readFile(filePath));

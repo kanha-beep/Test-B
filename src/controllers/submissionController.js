@@ -1,7 +1,10 @@
+// Handle submission creation, grading retrieval, and ranking refresh logic.
+
 import { Submission } from "../models/Submission.js";
 import { Test } from "../models/Test.js";
 import { evaluateSubmission } from "../utils/evaluateSubmission.js";
 
+// Handle the mapSubmissionCard logic for this module.
 function mapSubmissionCard(submission) {
   return {
     _id: submission._id,
@@ -14,6 +17,7 @@ function mapSubmissionCard(submission) {
   };
 }
 
+// Handle the listSubmissions logic for this module.
 export async function listSubmissions(request, response) {
   const candidateName = request.query.candidateName?.trim();
   let filter = {};
@@ -32,6 +36,7 @@ export async function listSubmissions(request, response) {
   return response.json(submissions.map(mapSubmissionCard));
 }
 
+// Handle the refreshRankings logic for this module.
 async function refreshRankings(testId) {
   const rankedSubmissions = await Submission.find({ testId }).sort({ score: -1, createdAt: 1 }).lean();
   let previousScore = null;
@@ -51,6 +56,7 @@ async function refreshRankings(testId) {
   }
 }
 
+// Save a completed submission, score it, and refresh rankings.
 export async function submitTest(request, response) {
   const { candidateName, answers } = request.body;
   const test = await Test.findById(request.params.id).lean();
@@ -88,6 +94,7 @@ export async function submitTest(request, response) {
   });
 }
 
+// Handle the getSubmissionById logic for this module.
 export async function getSubmissionById(request, response) {
   const submission = await Submission.findById(request.params.id)
     .populate("testId", "title totalMarks durationMinutes positiveMarks negativeMarks sourceType examType pageType sectionName")
@@ -113,6 +120,7 @@ export async function getSubmissionById(request, response) {
   });
 }
 
+// Return leaderboard rows for a specific test.
 export async function getTestRankings(request, response) {
   const test = await Test.findById(request.params.id).select("title examType pageType sectionName totalMarks").lean();
   if (!test) {
@@ -135,4 +143,4 @@ export async function getTestRankings(request, response) {
       submittedAt: item.createdAt
     }))
   });
-}
+}

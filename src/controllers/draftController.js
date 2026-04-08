@@ -1,5 +1,8 @@
+// Handle saving and retrieving imported-test drafts for users.
+
 import { ImportDraft } from "../models/ImportDraft.js";
 
+// Handle the upsertDraft logic for this module.
 export async function upsertDraft(request, response) {
   const userId = request.user._id;
   const {
@@ -7,6 +10,10 @@ export async function upsertDraft(request, response) {
     description = "",
     sourceFileName = "",
     durationMinutes = 30,
+    examType = "",
+    pageType = "full-test",
+    sectionName = "",
+    syllabusTags = [],
     questions = [],
     confirmedIds = [],
     warnings = []
@@ -20,6 +27,10 @@ export async function upsertDraft(request, response) {
       description,
       sourceFileName,
       durationMinutes: Number(durationMinutes) || 30,
+      examType,
+      pageType,
+      sectionName,
+      syllabusTags: Array.isArray(syllabusTags) ? syllabusTags : [],
       questions: Array.isArray(questions) ? questions : [],
       confirmedIds: Array.isArray(confirmedIds) ? confirmedIds : [],
       warnings: Array.isArray(warnings) ? warnings : []
@@ -34,6 +45,10 @@ export async function upsertDraft(request, response) {
       description: draft.description,
       sourceFileName: draft.sourceFileName,
       durationMinutes: draft.durationMinutes,
+      examType: draft.examType,
+      pageType: draft.pageType,
+      sectionName: draft.sectionName,
+      syllabusTags: draft.syllabusTags,
       questions: draft.questions,
       confirmedIds: draft.confirmedIds,
       warnings: draft.warnings,
@@ -42,6 +57,7 @@ export async function upsertDraft(request, response) {
   });
 }
 
+// Return the newest saved import draft for the current user.
 export async function getLatestDraft(request, response) {
   const draft = await ImportDraft.findOne({ userId: request.user._id }).lean();
 
@@ -55,6 +71,10 @@ export async function getLatestDraft(request, response) {
       description: draft.description,
       sourceFileName: draft.sourceFileName,
       durationMinutes: draft.durationMinutes,
+      examType: draft.examType,
+      pageType: draft.pageType,
+      sectionName: draft.sectionName,
+      syllabusTags: draft.syllabusTags,
       questions: draft.questions,
       confirmedIds: draft.confirmedIds,
       warnings: draft.warnings,

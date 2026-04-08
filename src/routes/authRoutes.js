@@ -1,3 +1,5 @@
+// Register authentication and user-management API endpoints.
+
 import { Router } from "express";
 import { listUsers, login, me, register, updatePreferences } from "../controllers/authController.js";
 import { requireAdmin, requireAuth } from "../middleware/authMiddleware.js";
@@ -10,4 +12,4 @@ router.get("/me", requireAuth, me);
 router.patch("/preferences", requireAuth, updatePreferences);
 router.get("/users", requireAuth, requireAdmin, listUsers);
 
-export default router;
+export default router;

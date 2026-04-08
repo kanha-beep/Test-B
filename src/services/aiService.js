@@ -1,30 +1,30 @@
+// Call the Python AI service to generate structured tests from prompts.
+
+import axios from "axios";
 import "dotenv/config";
 
 const PYTHON_AI_URL = process.env.PYTHON_AI_URL || "http://127.0.0.1:8000";
 
+// Ask the Python AI service to generate a new mock test from a prompt.
 export async function generateTestFromPrompt(prompt) {
-  let response;
-
   try {
-    response = await fetch(`${PYTHON_AI_URL}/generate-test`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ prompt })
-    });
+    const response = await axios.post(
+      `${PYTHON_AI_URL}/generate-test`,
+      { prompt },
+      {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    return response.data;
   } catch (error) {
-    if (error?.cause?.code === "ECONNREFUSED") {
+    if (error?.code === "ECONNREFUSED" || error?.cause?.code === "ECONNREFUSED") {
       throw new Error(`Python AI service is not running at ${PYTHON_AI_URL}. Start it before generating a test.`);
     }
 
-    throw new Error(`Unable to reach Python AI service: ${error.message}`);
+    const message = error?.response?.data?.detail || error?.message || "AI service request failed";
+    throw new Error(error?.response ? message : `Unable to reach Python AI service: ${message}`);
   }
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "AI service request failed" }));
-    throw new Error(error.detail || "AI service request failed");
-  }
-
-  return response.json();
-}
+}

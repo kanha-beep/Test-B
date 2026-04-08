@@ -1,7 +1,10 @@
+// Authenticate requests, decode tokens, and guard admin-only routes.
+
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { User } from "../models/User.js";
 
+// Handle the extractToken logic for this module.
 function extractToken(request) {
   const header = request.headers.authorization || "";
   const [type, token] = header.split(" ");
@@ -11,6 +14,7 @@ function extractToken(request) {
   return token;
 }
 
+// Handle the mapUser logic for this module.
 function mapUser(user) {
   return {
     _id: user._id,
@@ -21,6 +25,7 @@ function mapUser(user) {
   };
 }
 
+// Handle the optionalAuth logic for this module.
 export async function optionalAuth(request, _response, next) {
   const token = extractToken(request);
   if (!token) {
@@ -40,6 +45,7 @@ export async function optionalAuth(request, _response, next) {
   next();
 }
 
+// Handle the requireAuth logic for this module.
 export async function requireAuth(request, response, next) {
   const token = extractToken(request);
   if (!token) {
@@ -59,10 +65,11 @@ export async function requireAuth(request, response, next) {
   }
 }
 
+// Block requests from non-admin users.
 export function requireAdmin(request, response, next) {
   if (!request.user || request.user.role !== "admin") {
     return response.status(403).json({ message: "Admin access required" });
   }
 
   return next();
-}
+}

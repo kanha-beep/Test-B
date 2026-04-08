@@ -1,3 +1,5 @@
+// Register API endpoints used to save and restore imported-test drafts.
+
 import { Router } from "express";
 import { getLatestDraft, upsertDraft } from "../controllers/draftController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";

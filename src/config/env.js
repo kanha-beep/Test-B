@@ -1,3 +1,5 @@
+// Read environment variables and expose normalized server configuration values.
+
 import dotenv from "dotenv";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -8,6 +10,11 @@ dotenv.config({ path: resolve(__dirname, "../../.env") });
 export const env = {
   port: Number(process.env.PORT || 5000),
   mongoUri: process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://127.0.0.1:27017/gest-app",
-  allowedOrigin: (process.env.FRONT_END_URI || process.env.FRONT_END_URL || "http://localhost:5173").split(","),
-  jwtSecret: process.env.JWT_SECRET || "dev-only-change-me-in-production"
-};
+  allowedOrigin: (process.env.FRONT_END_URI || process.env.FRONT_END_URL || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  jwtSecret: process.env.JWT_SECRET || "dev-only-change-me-in-production",
+  nodeEnv: process.env.NODE_ENV || "development",
+  trustProxy: process.env.TRUST_PROXY === "true" || process.env.NODE_ENV === "production"
+};

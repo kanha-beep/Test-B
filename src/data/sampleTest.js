@@ -1,3 +1,5 @@
+// Provide sample test data used for seeding or local fallback scenarios.
+
 export const sampleTest = {
   title: "GEST Full Mock Test",
   description:

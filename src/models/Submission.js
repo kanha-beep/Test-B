@@ -1,3 +1,5 @@
+// Define the submission model schema stored in MongoDB.
+
 import mongoose from "mongoose";
 
 const answerSchema = new mongoose.Schema(
@@ -27,7 +29,7 @@ const evaluatedAnswerSchema = new mongoose.Schema(
     ],
     selectedOption: { type: String, default: null },
     correctOption: { type: String, required: true },
-    explanation: { type: String, required: true },
+    explanation: { type: String, default: "" },
     marksAwarded: { type: Number, default: 0 },
     status: {
       type: String,
@@ -60,4 +62,5 @@ const submissionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const Submission = mongoose.model("Submission", submissionSchema);
+export const Submission = mongoose.model("Submission", submissionSchema);
+
