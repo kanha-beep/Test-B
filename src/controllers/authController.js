@@ -65,7 +65,6 @@ export async function register(request, response) {
 
 // Validate credentials and return a signed auth token for the user.
 export async function login(request, response) {
-  console.log("1. Login start: ", request.body);
   const email = request.body?.email?.trim().toLowerCase();
   const password = request.body?.password;
 
@@ -77,14 +76,13 @@ export async function login(request, response) {
   if (!user) {
     return response.status(401).json({ message: "Invalid email or password" });
   }
-  console.log("2. Found User: ", user)
+
   // Support the current passwordHash field and fail safely if older records are malformed.
   const credentialHash = typeof user.passwordHash === "string" && user.passwordHash.trim() ? user.passwordHash : typeof user.password === "string" && user.password.trim() ? user.password : null;
-  console.log("3. Pass match: ", credentialHash)
   if (!credentialHash) {
     return response.status(401).json({ message: "Invalid email or password" });
   }
-  console.log("3. Pass match: ", credentialHash)
+
   const match = await bcrypt.compare(password, credentialHash);
   if (!match) {
     return response.status(401).json({ message: "Invalid email or password" });

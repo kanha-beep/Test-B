@@ -11,6 +11,7 @@ const importDraftSchema = new mongoose.Schema(
     durationMinutes: { type: Number, default: 30 },
     examType: { type: String, default: "" },
     pageType: { type: String, default: "full-test" },
+    explanationMode: { type: String, enum: ["with-solution", "without-explanation"], default: "with-solution" },
     sectionName: { type: String, default: "" },
     syllabusTags: { type: [String], default: [] },
     questions: { type: [mongoose.Schema.Types.Mixed], default: [] },

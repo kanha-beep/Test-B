@@ -17,19 +17,20 @@ import {
   submitTest
 } from "../controllers/submissionController.js";
 import { optionalAuth, requireAdmin, requireAuth } from "../middleware/authMiddleware.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
 
-router.get("/pdf-files", listPdfFiles);
-router.get("/parse-pdf", parsePdfFromFolder);
-router.get("/", listTests);
-router.post("/generate", optionalAuth, createGeneratedTest);
-router.post("/import", optionalAuth, createImportedTest);
-router.get("/submissions", optionalAuth, listSubmissions);
-router.get("/submissions/:id", optionalAuth, getSubmissionById);
-router.get("/:id/rankings", getTestRankings);
-router.get("/:id", getTestById);
-router.post("/:id/submissions", optionalAuth, submitTest);
-router.delete("/:id", requireAuth, requireAdmin, deleteTest);
+router.get("/pdf-files", asyncHandler(listPdfFiles));
+router.get("/parse-pdf", asyncHandler(parsePdfFromFolder));
+router.get("/", asyncHandler(listTests));
+router.post("/generate", optionalAuth, asyncHandler(createGeneratedTest));
+router.post("/import", requireAuth, asyncHandler(createImportedTest));
+router.get("/submissions", optionalAuth, asyncHandler(listSubmissions));
+router.get("/submissions/:id", optionalAuth, asyncHandler(getSubmissionById));
+router.get("/:id/rankings", optionalAuth, asyncHandler(getTestRankings));
+router.get("/:id", asyncHandler(getTestById));
+router.post("/:id/submissions", optionalAuth, asyncHandler(submitTest));
+router.delete("/:id", requireAuth, requireAdmin, asyncHandler(deleteTest));
 
 export default router;

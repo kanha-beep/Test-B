@@ -86,6 +86,17 @@ function parseAnswerKey(lines) {
   return map;
 }
 
+// Handle the lineLooksLikeQuestionStart logic for this module.
+function lineLooksLikeQuestionStart(line) {
+  const match = line.match(QUESTION_START);
+  if (!match) return false;
+  const body = normalizeWhitespace(match[2] || "");
+  if (!body) return false;
+  const wordCount = body.split(" ").filter(Boolean).length;
+  if (body.includes(" : ") && wordCount <= 7 && !/[?)]$/.test(body)) return false;
+  return true;
+}
+
 // Handle the splitInlineOptions logic for this module.
 function splitInlineOptions(line) {
   const matches = [...line.matchAll(/(^|\s)\(?\s*([A-Da-d])\s*\)?\s*[)\].:\-]?\s+(?=\S)/g)];
@@ -100,20 +111,50 @@ function splitInlineOptions(line) {
 }
 
 // Handle the parseQuestionBlocks logic for this module.
-function parseQuestionBlocks(lines) {
-  const starts = [];
-  lines.forEach((line, i) => { if (QUESTION_START.test(line)) starts.push(i); });
-  const all = starts.map((start, i) => lines.slice(start, i + 1 < starts.length ? starts[i + 1] : lines.length));
-  const filtered = [];
-  let last = 0;
-  for (const block of all) {
-    const m = block[0].match(QUESTION_START);
-    if (!m) continue;
-    const num = Number(m[1]);
-    if (num > last) { last = num; filtered.push(block); }
-    else if (filtered.length > 0) filtered[filtered.length - 1].push(...block);
+function blockHasOptionSignals(block) {
+  let count = 0;
+  for (let index = 1; index < block.length; index += 1) {
+    const line = block[index];
+    if (OPTION_START.test(line)) count += 1;
+    else if (splitInlineOptions(line)?.length >= 2) count += 2;
+    if (count >= 2) return true;
   }
-  return filtered;
+  return false;
+}
+
+// Handle the parseQuestionBlocks logic for this module.
+function parseQuestionBlocks(lines) {
+  const blocks = [];
+  let currentBlock = [];
+  let currentQuestionNumber = 0;
+
+  for (const line of lines) {
+    if (lineLooksLikeQuestionStart(line)) {
+      const nextQuestionNumber = Number(line.match(QUESTION_START)?.[1] || 0);
+      if (!currentBlock.length) {
+        currentBlock = [line];
+        currentQuestionNumber = nextQuestionNumber;
+        continue;
+      }
+
+      if (nextQuestionNumber > currentQuestionNumber && blockHasOptionSignals(currentBlock)) {
+        blocks.push(currentBlock);
+        currentBlock = [line];
+        currentQuestionNumber = nextQuestionNumber;
+        continue;
+      }
+    }
+
+    if (currentBlock.length) {
+      currentBlock.push(line);
+    }
+  }
+
+  if (currentBlock.length) {
+    blocks.push(currentBlock);
+  }
+
+  return blocks;
 }
 
 // Handle the finalizeOption logic for this module.
@@ -140,13 +181,6 @@ function parseQuestionBlock(block, answerKey) {
     const answerMatch = line.match(INLINE_ANSWER);
     if (answerMatch) { inlineCorrect = answerMatch[1].toUpperCase(); continue; }
 
-    const optMatch = line.match(OPTION_START);
-    if (optMatch) {
-      finalizeOption(currentOption, options);
-      currentOption = { key: optMatch[1].toUpperCase(), text: [optMatch[2]] };
-      continue;
-    }
-
     const inlineOpts = splitInlineOptions(line);
     if (inlineOpts) {
       finalizeOption(currentOption, options);
@@ -155,6 +189,13 @@ function parseQuestionBlock(block, answerKey) {
         const sm = seg.match(/^\(?\s*([A-Da-d])\s*\)?\s*[)\].:\-]?\s*(.+)$/);
         if (sm) options.push({ key: sm[1].toUpperCase(), text: normalizeWhitespace(sm[2]) });
       });
+      continue;
+    }
+
+    const optMatch = line.match(OPTION_START);
+    if (optMatch) {
+      finalizeOption(currentOption, options);
+      currentOption = { key: optMatch[1].toUpperCase(), text: [optMatch[2]] };
       continue;
     }
 

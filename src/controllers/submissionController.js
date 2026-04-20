@@ -2,6 +2,7 @@
 
 import { Submission } from "../models/Submission.js";
 import { Test } from "../models/Test.js";
+import { User } from "../models/User.js";
 import { evaluateSubmission } from "../utils/evaluateSubmission.js";
 
 // Handle the mapSubmissionCard logic for this module.
@@ -26,6 +27,8 @@ export async function listSubmissions(request, response) {
     filter = { userId: request.user._id };
   } else if (candidateName) {
     filter = { candidateName };
+  } else {
+    return response.status(400).json({ message: "Candidate name is required for guest submissions" });
   }
 
   const submissions = await Submission.find(filter)
@@ -41,6 +44,7 @@ async function refreshRankings(testId) {
   const rankedSubmissions = await Submission.find({ testId }).sort({ score: -1, createdAt: 1 }).lean();
   let previousScore = null;
   let currentRank = 0;
+  const operations = [];
 
   for (let index = 0; index < rankedSubmissions.length; index += 1) {
     const submission = rankedSubmissions[index];
@@ -49,10 +53,20 @@ async function refreshRankings(testId) {
       previousScore = submission.score;
     }
 
-    await Submission.updateOne(
-      { _id: submission._id },
-      { $set: { rankingSnapshot: { rank: currentRank, totalParticipants: rankedSubmissions.length } } }
-    );
+    operations.push({
+      updateOne: {
+        filter: { _id: submission._id },
+        update: {
+          $set: {
+            rankingSnapshot: { rank: currentRank, totalParticipants: rankedSubmissions.length }
+          }
+        }
+      }
+    });
+  }
+
+  if (operations.length > 0) {
+    await Submission.bulkWrite(operations);
   }
 }
 
@@ -96,6 +110,7 @@ export async function submitTest(request, response) {
 
 // Handle the getSubmissionById logic for this module.
 export async function getSubmissionById(request, response) {
+  const candidateName = request.query.candidateName?.trim();
   const submission = await Submission.findById(request.params.id)
     .populate("testId", "title totalMarks durationMinutes positiveMarks negativeMarks sourceType examType pageType sectionName")
     .lean();
@@ -105,6 +120,10 @@ export async function getSubmissionById(request, response) {
   }
 
   if (request.user && submission.userId && String(submission.userId) !== String(request.user._id) && request.user.role !== "admin") {
+    return response.status(403).json({ message: "Access denied" });
+  }
+
+  if (!request.user && candidateName !== submission.candidateName) {
     return response.status(403).json({ message: "Access denied" });
   }
 
@@ -129,8 +148,14 @@ export async function getTestRankings(request, response) {
 
   const rankings = await Submission.find({ testId: request.params.id })
     .sort({ score: -1, createdAt: 1 })
-    .select("candidateName score summary rankingSnapshot createdAt")
+    .select("candidateName score summary rankingSnapshot createdAt userId")
     .lean();
+
+  const topRankUserIds = [...new Set(rankings.filter((item) => item.rankingSnapshot?.rank === 1 && item.userId).map((item) => String(item.userId)))];
+  const topRankUsers = topRankUserIds.length
+    ? await User.find({ _id: { $in: topRankUserIds } }).select("email").lean()
+    : [];
+  const topRankEmailMap = new Map(topRankUsers.map((user) => [String(user._id), user.email]));
 
   return response.json({
     test,
@@ -140,7 +165,14 @@ export async function getTestRankings(request, response) {
       score: item.score,
       summary: item.summary,
       rank: item.rankingSnapshot?.rank || null,
-      submittedAt: item.createdAt
+      submittedAt: item.createdAt,
+      contactEmail:
+        request.user &&
+        item.rankingSnapshot?.rank === 1 &&
+        item.userId &&
+        String(item.userId) !== String(request.user._id)
+          ? topRankEmailMap.get(String(item.userId)) || ""
+          : ""
     }))
   });
-}
+}

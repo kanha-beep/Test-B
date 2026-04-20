@@ -31,6 +31,7 @@ const testSchema = new mongoose.Schema(
     sourceType: { type: String, enum: ["prompt", "pdf"], default: "prompt" },
     examType: { type: String, default: "General" },
     pageType: { type: String, enum: ["full-test", "sectional", "pyq", "custom"], default: "full-test" },
+    explanationMode: { type: String, enum: ["with-solution", "without-explanation"], default: "with-solution" },
     sectionName: { type: String, default: "" },
     syllabusTags: { type: [String], default: [] },
     createdByName: { type: String, default: "System" },

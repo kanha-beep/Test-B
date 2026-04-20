@@ -41,7 +41,7 @@ app.use(
       }
       return callback(new Error("CORS origin not allowed"));
     },
-    credentials: true,
+    credentials: false,
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
   })
@@ -63,6 +63,9 @@ app.get("/api/health", (_request, response) => {
 app.use("/api/auth", createAuthSlowDown(), createAuthLimiter(), authRoutes);
 app.use("/api/drafts", draftRoutes);
 app.use("/api/tests", testRoutes);
+app.use((_request, response) => {
+  response.status(404).json({ message: "Route not found" });
+});
 
 // CORS and app errors return safe JSON.
 app.use((error, _request, response, _next) => {
@@ -72,7 +75,15 @@ app.use((error, _request, response, _next) => {
     return response.status(403).json({ message: error.message });
   }
 
-  return response.status(500).json({ message: "Internal server error" });
+  if (error.name === "ValidationError") {
+    return response.status(400).json({ message: error.message || "Validation failed" });
+  }
+
+  if (error.name === "CastError") {
+    return response.status(400).json({ message: "Invalid resource id" });
+  }
+
+  return response.status(error.statusCode || 500).json({ message: error.message || "Internal server error" });
 });
 
 connectDb()
