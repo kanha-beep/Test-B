@@ -67,7 +67,7 @@ export async function register(request, response) {
 export async function login(request, response) {
   const email = request.body?.email?.trim().toLowerCase();
   const password = request.body?.password;
-
+console.log("1. passed")
   if (!email || !password) {
     return response.status(400).json({ message: "Email and password are required" });
   }
@@ -76,18 +76,20 @@ export async function login(request, response) {
   if (!user) {
     return response.status(401).json({ message: "Invalid email or password" });
   }
-
+console.log("2. user found", user)
   // Support the current passwordHash field and fail safely if older records are malformed.
-  const credentialHash = typeof user.passwordHash === "string" && user.passwordHash.trim() ? user.passwordHash : typeof user.password === "string" && user.password.trim() ? user.password : null;
-  if (!credentialHash) {
-    return response.status(401).json({ message: "Invalid email or password" });
-  }
+  // const credentialHash = typeof user.passwordHash === "string" && user.passwordHash.trim() ? user.passwordHash : typeof user.password === "string" && user.password.trim() ? user.password : null;
+  // console.log("3. credentials", credentialHash)
+  // if (!credentialHash) {
+  //   return response.status(401).json({ message: "Invalid email or password" });
+  // }
 
-  const match = await bcrypt.compare(password, credentialHash);
+  const match = await bcrypt.compare(password, user?.password || "");
+  console.log("3. credentials", match)
   if (!match) {
     return response.status(401).json({ message: "Invalid email or password" });
   }
-
+console.log("3. credentials")
   const token = signToken(user._id);
 
   return response.json({
